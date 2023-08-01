@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
+import "./IERC721.sol";
 
 contract Market{
     // public - avaiable from anywhere like any contract or wallet
@@ -29,7 +30,13 @@ contract Market{
     uint private _listingId = 0;
     mapping(uint => Listing) private _listings;
 
+    // seller deposits his tokens in our market and lists them
     function listTokens(address token, uint tokenId, uint price) external{
+        // all tokens in ERC721 can be transferred in NFT
+        // token is the address of the token that will be transferred
+        // from this sender to our own contract which is address[this]
+        IERC721(token).transferFrom(msg.sender, address(this), tokenId);
+
         // this listing variable will stay in memory for the duration of the
         // function call
         // we will use msg.sender to get the actual person making this call because if 
@@ -80,8 +87,22 @@ contract Market{
         // must check the amount of ether is greater than the price of the token 
         require(msg.value >= listing.price, "Insuffient amount");
 
-        
+        // when someone buys the token from this address
+        IERC721(listing.token).transferFrom(address(this), msg.sender, listing.tokenId);
+        payable(listing.seller).transfer(listing.price);
 
+
+    }
+
+    function cancel(uint listingId) public{
+        Listing storage listing = _listings[listingId];
+
+        require(listing.status == ListingStatus.Active, "Listing already not active.");
+        require(msg.sender == listing.seller, "Only seller can cancel listing");
+
+        listing.status = ListingStatus.Cancelled;
+
+        IERC721(listing.token).transferFrom(address(this), msg.sender, listing.tokenId);
     }
 
 }
