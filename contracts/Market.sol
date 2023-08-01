@@ -24,6 +24,29 @@ contract Market{
         uint price;
     }
 
+    event Listed(
+        uint listingId,
+        address seller,
+        address token, 
+        uint tokenId,
+        uint price
+    );
+
+    event Sale(
+        uint listingId,
+        address buyer, 
+        address token,
+        uint tokenId,
+        uint price
+    );
+
+    event Cancel(
+        uint listingId,
+        address token,
+        uint tokenId, 
+        address seller
+    );
+
     // mapping is like dict in python
     // takes an integer and matches it to a listing 
     // it will be stored forever
@@ -53,6 +76,8 @@ contract Market{
         _listingId ++;
 
         _listings[_listingId] = listing;
+
+        emit Listed(_listingId, msg.sender, token, tokenId, price);
 
     }
 
@@ -91,6 +116,9 @@ contract Market{
         IERC721(listing.token).transferFrom(address(this), msg.sender, listing.tokenId);
         payable(listing.seller).transfer(listing.price);
 
+        // transfer price after taking the NFT for security
+        emit Sale(listingId, msg.sender, listing.token, listing.tokenId, listing.price);
+
 
     }
 
@@ -103,6 +131,8 @@ contract Market{
         listing.status = ListingStatus.Cancelled;
 
         IERC721(listing.token).transferFrom(address(this), msg.sender, listing.tokenId);
+
+        emit Cancel(listingId, listing.token, listing.tokenId, listing.seller);
     }
 
 }
