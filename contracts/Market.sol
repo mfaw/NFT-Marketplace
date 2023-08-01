@@ -81,6 +81,15 @@ contract Market{
 
     }
 
+    // function - read and write from contract, requires gas
+    // view - read from contract only
+    // pure - no read or write
+
+    function getListing(uint listingId) public view returns (Listing memory){
+        return _listings[listingId];
+
+    }
+
     // which token they want to buy from the listingId
     // to accept payment, add payabale
     // payable allows sending ether to this function
